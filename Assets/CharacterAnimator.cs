@@ -20,12 +20,14 @@ public class CharacterAnimator : MonoBehaviour
     {
         BVHParser parser = new BVHParser();
         data = parser.Parse(BVHFile);
+        CreateJoint(data.rootJoint, Vector3.zero);
     }
 
     // Returns a Matrix4x4 representing a rotation aligning the up direction of an object with the given v
     public Matrix4x4 RotateTowardsVector(Vector3 v)
     {
-        // Your code here
+        v.Normalize();
+
         return Matrix4x4.zero;
     }
 
@@ -39,8 +41,25 @@ public class CharacterAnimator : MonoBehaviour
     // Creates a GameObject representing a given BVHJoint and recursively creates GameObjects for it's child joints
     public GameObject CreateJoint(BVHJoint joint, Vector3 parentPosition)
     {
-        // Your code here
-        return null;
+        joint.gameObject = new GameObject(joint.name);
+        GameObject newJoint = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        newJoint.transform.parent = joint.gameObject.transform;
+
+        Matrix4x4 scaleMat = MatrixUtils.Scale(new Vector3(2, 2, 2));
+        if (joint.name.Equals("Head"))
+            scaleMat = MatrixUtils.Scale(new Vector3(8, 8, 8));
+
+        Vector4 tempVec = new Vector4(newJoint.transform.localScale.x, newJoint.transform.localScale.y, newJoint.transform.localScale.z, 1);
+        newJoint.transform.localScale = scaleMat * tempVec;
+
+        Matrix4x4 transformMat = MatrixUtils.Translate(parentPosition + joint.offset);
+        MatrixUtils.ApplyTransform(joint.gameObject, transformMat);
+        foreach (var child in joint.children)
+        {
+            CreateJoint(child, joint.gameObject.transform.position);
+        }
+
+        return joint.gameObject;
     }
 
     // Transforms BVHJoint according to the keyframe channel data, and recursively transforms its children
