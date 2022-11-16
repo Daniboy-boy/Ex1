@@ -49,14 +49,13 @@ public class CharacterAnimator : MonoBehaviour
         if (joint.name.Equals("Head"))
             scaleMat = MatrixUtils.Scale(new Vector3(8, 8, 8));
 
-        Vector4 tempVec = new Vector4(newJoint.transform.localScale.x, newJoint.transform.localScale.y, newJoint.transform.localScale.z, 1);
-        newJoint.transform.localScale = scaleMat * tempVec;
+        MatrixUtils.ApplyTransform(newJoint, scaleMat);
 
-        Matrix4x4 transformMat = MatrixUtils.Translate(parentPosition + joint.offset);
-        MatrixUtils.ApplyTransform(joint.gameObject, transformMat);
+        Matrix4x4 translationMat = MatrixUtils.Translate(parentPosition + joint.offset);
+        MatrixUtils.ApplyTransform(joint.gameObject, translationMat);
         foreach (var child in joint.children)
         {
-            CreateJoint(child, joint.gameObject.transform.position);
+            CreateJoint(child, parentPosition + joint.offset);
         }
 
         return joint.gameObject;
