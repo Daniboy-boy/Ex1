@@ -21,6 +21,7 @@ public class CharacterAnimator : MonoBehaviour
         BVHParser parser = new BVHParser();
         data = parser.Parse(BVHFile);
         CreateJoint(data.rootJoint, Vector3.zero);
+        
     }
 
     // Returns a Matrix4x4 representing a rotation aligning the up direction of an object with the given v
