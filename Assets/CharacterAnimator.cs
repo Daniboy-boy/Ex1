@@ -21,17 +21,14 @@ public class CharacterAnimator : MonoBehaviour
         BVHParser parser = new BVHParser();
         data = parser.Parse(BVHFile);
         CreateJoint(data.rootJoint, Vector3.zero);
-        RotateTowardsVector(new Vector3(1,2,3));
     }
 
     // Returns a Matrix4x4 representing a rotation aligning the up direction of an object with the given v
     public Matrix4x4 RotateTowardsVector(Vector3 v)
     {
         v.Normalize();
-        var RX = MatrixUtils.RotateX(90 - Mathf.Atan2(v.y, v.z) * Mathf.Rad2Deg);
+        var RX = MatrixUtils.RotateX(-(90 - Mathf.Atan2(v.y, v.z) * Mathf.Rad2Deg));
         var RZ = MatrixUtils.RotateZ(90 - Mathf.Atan2(Mathf.Sqrt(v.y * v.y + v.z * v.z), v.x) * Mathf.Rad2Deg);
-        print((RX.inverse * RZ.inverse).MultiplyVector(Vector3.up));
-        print(v);
         return RX.inverse * RZ.inverse;
     }
 
