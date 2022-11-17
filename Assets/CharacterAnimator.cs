@@ -82,7 +82,7 @@ public class CharacterAnimator : MonoBehaviour
     // Returns the frame nunmber of the BVH animation at a given time
     public int GetFrameNumber(float time)
     {
-        // Your code here
+        
         return 0;
     }
 
