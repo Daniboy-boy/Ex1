@@ -27,16 +27,22 @@ public class CharacterAnimator : MonoBehaviour
     public Matrix4x4 RotateTowardsVector(Vector3 v)
     {
         v.Normalize();
-        var RX = MatrixUtils.RotateX(-(90 - Mathf.Atan2(v.y, v.z) * Mathf.Rad2Deg));
-        var RZ = MatrixUtils.RotateZ(90 - Mathf.Atan2(Mathf.Sqrt(v.y * v.y + v.z * v.z), v.x) * Mathf.Rad2Deg);
-        return RX.inverse * RZ.inverse;
+        var rX = MatrixUtils.RotateX(-(90 - Mathf.Atan2(v.y, v.z) * Mathf.Rad2Deg));
+        var rZ = MatrixUtils.RotateZ(90 - Mathf.Atan2(Mathf.Sqrt(v.y * v.y + v.z * v.z), v.x) * Mathf.Rad2Deg);
+        return rX.inverse * rZ.inverse;
     }
 
     // Creates a Cylinder GameObject between two given points in 3D space
     public GameObject CreateCylinderBetweenPoints(Vector3 p1, Vector3 p2, float diameter)
     {
-        // Your code here
-        return null;
+        GameObject cylinder = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        var directionVector = p2 - p1;
+        var tMat = MatrixUtils.Translate((p1 + p2) / 2);
+        var rMat = RotateTowardsVector(directionVector);
+        var sMat = MatrixUtils.Scale(new Vector3(diameter,directionVector.magnitude/2 , diameter));
+        var mMat = tMat * rMat * sMat;
+        MatrixUtils.ApplyTransform(cylinder, mMat);
+        return cylinder;
     }
 
     // Creates a GameObject representing a given BVHJoint and recursively creates GameObjects for it's child joints
@@ -52,11 +58,16 @@ public class CharacterAnimator : MonoBehaviour
 
         MatrixUtils.ApplyTransform(newJoint, scaleMat);
 
-        Matrix4x4 translationMat = MatrixUtils.Translate(parentPosition + joint.offset);
+        var currPosition = parentPosition + joint.offset;
+        Matrix4x4 translationMat = MatrixUtils.Translate(currPosition);
         MatrixUtils.ApplyTransform(joint.gameObject, translationMat);
         foreach (var child in joint.children)
+            
         {
-            CreateJoint(child, parentPosition + joint.offset);
+            CreateJoint(child, currPosition);
+            var newCylinder =  CreateCylinderBetweenPoints(currPosition,
+                currPosition+child.offset, 0.6f);
+            newCylinder.transform.parent = joint.gameObject.transform;
         }
 
         return joint.gameObject;
