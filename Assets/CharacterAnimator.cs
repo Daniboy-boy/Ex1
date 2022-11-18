@@ -82,8 +82,7 @@ public class CharacterAnimator : MonoBehaviour
     // Returns the frame nunmber of the BVH animation at a given time
     public int GetFrameNumber(float time)
     {
-        
-        return 0;
+        return (int)(time / data.frameLength) % data.numFrames;
     }
 
     // Returns the proportion of time elapsed between the last frame and the next one, between 0 and 1
