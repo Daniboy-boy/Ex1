@@ -76,7 +76,31 @@ public class CharacterAnimator : MonoBehaviour
     // Transforms BVHJoint according to the keyframe channel data, and recursively transforms its children
     public void TransformJoint(BVHJoint joint, Matrix4x4 parentTransform)
     {
-        // Your code here
+        //where is keyframe? I think its just the CurrFrameData.
+        //M = TRS
+        //there is no scaling. S = I4
+        //find the natrices that construct R
+        var zRotation = MatrixUtils.RotateX(currFrameData[joint.rotationChannels.z]);
+        var yRotation = MatrixUtils.RotateX(currFrameData[joint.rotationChannels.y]);
+        var xRotation = MatrixUtils.RotateX(currFrameData[joint.rotationChannels.x]);
+        //find the ordering of mult for R
+        var rotationMat = joint.rotationOrder.x == 0 ? xRotation : (joint.rotationOrder.y == 0 ? yRotation : zRotation);
+        rotationMat = joint.rotationOrder.x == 1 ? rotationMat*xRotation : (joint.rotationOrder.y == 1 ? rotationMat*yRotation : rotationMat*zRotation);
+        rotationMat = joint.rotationOrder.x == 2 ? rotationMat*xRotation : (joint.rotationOrder.y == 2 ? rotationMat*yRotation : rotationMat*zRotation);
+        
+        
+        //construct T
+        var translationMat = MatrixUtils.Translate(joint.offset);
+        //construct M
+        var currM =  translationMat * rotationMat;
+        var globalM = parentTransform * currM;
+        //apply M
+        MatrixUtils.ApplyTransform(joint.gameObject, globalM);
+        
+        foreach (var child in joint.children)
+        {
+            TransformJoint(child, currM);
+        }
     }
 
     // Returns the frame nunmber of the BVH animation at a given time
@@ -99,7 +123,13 @@ public class CharacterAnimator : MonoBehaviour
         if (animate)
         {
             int currFrame = GetFrameNumber(time);
-            // Your code here
+            currFrameData = data.keyframes[currFrame];
+            //For now, set the parentTransform parameter such that no
+            //transformation will be applied to the root joint.
+            TransformJoint(data.rootJoint,Matrix4x4.identity);
+            
+            
+
         }
     }
 }
