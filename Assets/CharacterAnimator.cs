@@ -124,9 +124,12 @@ public class CharacterAnimator : MonoBehaviour
         {
             int currFrame = GetFrameNumber(time);
             currFrameData = data.keyframes[currFrame];
-            //For now, set the parentTransform parameter such that no
-            //transformation will be applied to the root joint.
-            TransformJoint(data.rootJoint,Matrix4x4.identity);
+            var positionVec = new Vector3(currFrameData[data.rootJoint.positionChannels.x],
+            currFrameData[data.rootJoint.positionChannels.y], currFrameData[data.rootJoint.positionChannels.z]);
+            Matrix4x4 rootVec = MatrixUtils.Translate(positionVec);
+            //update location every frame
+            TransformJoint(data.rootJoint, rootVec);
+            
             
             
 
