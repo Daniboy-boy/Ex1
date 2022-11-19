@@ -76,30 +76,30 @@ public class CharacterAnimator : MonoBehaviour
     // Transforms BVHJoint according to the keyframe channel data, and recursively transforms its children
     public void TransformJoint(BVHJoint joint, Matrix4x4 parentTransform)
     {
-        //where is keyframe? I think its just the CurrFrameData.
-        //M = TRS
-        //there is no scaling. S = I4
-        //find the natrices that construct R
-        var zRotation = MatrixUtils.RotateX(currFrameData[joint.rotationChannels.z]);
-        var yRotation = MatrixUtils.RotateX(currFrameData[joint.rotationChannels.y]);
+        
+        // M = TRS
+        // there is no scaling. S = I4
+        // find the natrices that construct R
+        var zRotation = MatrixUtils.RotateZ(currFrameData[joint.rotationChannels.z]);
+        var yRotation = MatrixUtils.RotateY(currFrameData[joint.rotationChannels.y]);
         var xRotation = MatrixUtils.RotateX(currFrameData[joint.rotationChannels.x]);
         //find the ordering of mult for R
         var rotationMat = joint.rotationOrder.x == 0 ? xRotation : (joint.rotationOrder.y == 0 ? yRotation : zRotation);
         rotationMat = joint.rotationOrder.x == 1 ? rotationMat*xRotation : (joint.rotationOrder.y == 1 ? rotationMat*yRotation : rotationMat*zRotation);
         rotationMat = joint.rotationOrder.x == 2 ? rotationMat*xRotation : (joint.rotationOrder.y == 2 ? rotationMat*yRotation : rotationMat*zRotation);
         
-        
         //construct T
         var translationMat = MatrixUtils.Translate(joint.offset);
+        
         //construct M
-        var currM =  translationMat * rotationMat;
+        var currM = translationMat * rotationMat;
         var globalM = parentTransform * currM;
         //apply M
         MatrixUtils.ApplyTransform(joint.gameObject, globalM);
         
         foreach (var child in joint.children)
         {
-            TransformJoint(child, currM);
+            TransformJoint(child, globalM);
         }
     }
 
