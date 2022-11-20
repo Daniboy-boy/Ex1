@@ -33,18 +33,18 @@ public class QuaternionUtils
     public static Vector4 AxisAngle(Vector3 axis, float theta)
     {
         axis.Normalize();
-        return new Vector4(Mathf.Sin(theta/2) * axis.x,
-                           Mathf.Sin(theta/2) * axis.y,
-                           Mathf.Sin(theta/2) * axis.z,
-                           Mathf.Cos(theta/2));
+        return new Vector4(Mathf.Sin(theta * Mathf.Deg2Rad / 2) * axis.x,
+                           Mathf.Sin(theta * Mathf.Deg2Rad / 2) * axis.y,
+                           Mathf.Sin(theta * Mathf.Deg2Rad / 2) * axis.z,
+                           Mathf.Cos(theta * Mathf.Deg2Rad / 2));
     }
 
     // Returns a quaternion representing the given Euler angles applied in the given rotation order
     public static Vector4 FromEuler(Vector3 euler, Vector3Int rotationOrder)
     {
         var axisAngX = AxisAngle(Vector3.right, euler.x);
-        var axisAngY = AxisAngle(Vector3.right, euler.y);
-        var axisAngZ = AxisAngle(Vector3.right, euler.z);
+        var axisAngY = AxisAngle(Vector3.up, euler.y);
+        var axisAngZ = AxisAngle(Vector3.forward, euler.z);
 
         var rotationVec = new Vector4(0, 0, 0, 1);
         for (int i = 0; i < 3; ++i)
@@ -61,10 +61,10 @@ public class QuaternionUtils
         q1.Normalize();
         q2.Normalize();
         var q1q2Minus1 = Multiply(q1, Conjugate(q2)).normalized;
-        var theta = 2 * Mathf.Acos(q1q2Minus1.w);
+        var theta = Mathf.Acos(q1q2Minus1.w);
         
         if (Mathf.Abs(theta) > Mathf.PI / 2)
-            theta = 2 * Mathf.Acos(-q1q2Minus1.w);
+            theta = Mathf.Acos(-q1q2Minus1.w);
         
         if (Mathf.Sin(theta) == 0)
             return q1;
