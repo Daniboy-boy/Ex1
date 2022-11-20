@@ -76,25 +76,35 @@ public class CharacterAnimator : MonoBehaviour
     // Transforms BVHJoint according to the keyframe channel data, and recursively transforms its children
     public void TransformJoint(BVHJoint joint, Matrix4x4 parentTransform)
     {
+        Matrix4x4 globalM;
+        if (interpolate)
+        {
+            var curRotation = QuaternionUtils.FromEuler(new Vector3(currFrameData[joint.rotationChannels.x], currFrameData[joint.rotationChannels.y], currFrameData[joint.rotationChannels.z]), joint.rotationOrder);
+            var nextRotation = QuaternionUtils.FromEuler(new Vector3(nextFrameData[joint.rotationChannels.x], nextFrameData[joint.rotationChannels.y], nextFrameData[joint.rotationChannels.z]), joint.rotationOrder);
+            globalM = MatrixUtils.RotateFromQuaternion(QuaternionUtils.Slerp(curRotation, nextRotation, t));
+        }
+        else
+        {
+            // M = TRS
+            // there is no scaling. S = I4
+            // find the natrices that construct R
+            var zRotation = MatrixUtils.RotateZ(currFrameData[joint.rotationChannels.z]);
+            var yRotation = MatrixUtils.RotateY(currFrameData[joint.rotationChannels.y]);
+            var xRotation = MatrixUtils.RotateX(currFrameData[joint.rotationChannels.x]);
+            //find the ordering of mult for R
+            var rotationMat = joint.rotationOrder.x == 0 ? xRotation : (joint.rotationOrder.y == 0 ? yRotation : zRotation);
+            rotationMat = joint.rotationOrder.x == 1 ? rotationMat*xRotation : (joint.rotationOrder.y == 1 ? rotationMat*yRotation : rotationMat*zRotation);
+            rotationMat = joint.rotationOrder.x == 2 ? rotationMat*xRotation : (joint.rotationOrder.y == 2 ? rotationMat*yRotation : rotationMat*zRotation);
         
-        // M = TRS
-        // there is no scaling. S = I4
-        // find the natrices that construct R
-        var zRotation = MatrixUtils.RotateZ(currFrameData[joint.rotationChannels.z]);
-        var yRotation = MatrixUtils.RotateY(currFrameData[joint.rotationChannels.y]);
-        var xRotation = MatrixUtils.RotateX(currFrameData[joint.rotationChannels.x]);
-        //find the ordering of mult for R
-        var rotationMat = joint.rotationOrder.x == 0 ? xRotation : (joint.rotationOrder.y == 0 ? yRotation : zRotation);
-        rotationMat = joint.rotationOrder.x == 1 ? rotationMat*xRotation : (joint.rotationOrder.y == 1 ? rotationMat*yRotation : rotationMat*zRotation);
-        rotationMat = joint.rotationOrder.x == 2 ? rotationMat*xRotation : (joint.rotationOrder.y == 2 ? rotationMat*yRotation : rotationMat*zRotation);
+            //construct T
+            var translationMat = MatrixUtils.Translate(joint.offset);
         
-        //construct T
-        var translationMat = MatrixUtils.Translate(joint.offset);
+            //construct M
+            var currM = translationMat * rotationMat;
+            globalM = parentTransform * currM;
+        }
         
-        //construct M
-        var currM = translationMat * rotationMat;
-        var globalM = parentTransform * currM;
-        //apply M
+
         MatrixUtils.ApplyTransform(joint.gameObject, globalM);
         
         foreach (var child in joint.children)
@@ -112,27 +122,35 @@ public class CharacterAnimator : MonoBehaviour
     // Returns the proportion of time elapsed between the last frame and the next one, between 0 and 1
     public float GetFrameIntervalTime(float time)
     {
-        // Your code here
-        return 0;
+        return (time % data.frameLength) / data.frameLength;
     }
 
     // Update is called once per frame
     void Update()
     {
         float time = Time.time * animationSpeed;
+        t = GetFrameIntervalTime(time);
+
         if (animate)
         {
             int currFrame = GetFrameNumber(time);
             currFrameData = data.keyframes[currFrame];
             var positionVec = new Vector3(currFrameData[data.rootJoint.positionChannels.x],
             currFrameData[data.rootJoint.positionChannels.y], currFrameData[data.rootJoint.positionChannels.z]);
+
+            int nextFrameIndex = currFrame + 1 < data.keyframes.Count ? currFrame + 1 : currFrame;
+            nextFrameData = data.keyframes[nextFrameIndex];
+
+            if (interpolate)
+            {
+                var nextPosition = new Vector3(nextFrameData[data.rootJoint.positionChannels.x],
+                    nextFrameData[data.rootJoint.positionChannels.y], nextFrameData[data.rootJoint.positionChannels.z]);
+                positionVec = Vector3.Lerp(positionVec, nextPosition, t);
+            }
+
             Matrix4x4 rootVec = MatrixUtils.Translate(positionVec);
             //update location every frame
             TransformJoint(data.rootJoint, rootVec);
-            
-            
-            
-
         }
     }
 }
